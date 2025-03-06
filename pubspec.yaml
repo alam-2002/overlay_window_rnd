@@ -1,0 +1,44 @@
+name: overlay_window_rnd
+description: "A new Flutter project."
+
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.6.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+  get: ^4.7.2
+  flutter_overlay_window: ^0.4.5
+  system_alert_window: ^2.0.4
+  url_launcher: ^6.3.1
+  google_maps_flutter: ^2.10.1
+
+  # below package is for execute dart code in background.
+  flutter_background_service: ^5.1.0
+
+  # below package is for launch the google map from overlay window,
+  # using because url_launcher does not support launch something from background,
+  # url_launcher only supports launch something from foreground.
+  android_intent_plus: ^5.3.0
+
+  # headless execution of Dart code in the background
+  workmanager: ^0.5.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^5.0.0
+
+flutter:
+
+  uses-material-design: true
+
+  # assets:
+  #   - images/a_dot_burr.jpeg
