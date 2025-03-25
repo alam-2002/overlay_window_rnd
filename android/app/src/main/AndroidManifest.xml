@@ -23,6 +23,11 @@
         android:resizeableActivity="true"
         android:icon="@mipmap/ic_launcher">
 
+        <service
+            android:name=".ChatHeadService"
+            android:enabled="true"
+            android:exported="false"/>
+
         <!-- flutter_overlay_window package service tag -->
         <service
             android:name="flutter.overlay.window.flutter_overlay_window.OverlayService"

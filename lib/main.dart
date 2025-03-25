@@ -2,19 +2,16 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_overlay_window/flutter_overlay_window.dart';
 import 'package:overlay_window_rnd/components/background_service.dart';
+import 'package:overlay_window_rnd/components/common_methods.dart';
 import 'package:overlay_window_rnd/components/overlay_widget_top.dart';
 import 'package:overlay_window_rnd/components/overlay_widget_bottom.dart';
+import 'package:overlay_window_rnd/screen/api_call_screen.dart';
 import 'package:overlay_window_rnd/screen/flutter_overlay_screen.dart';
-import 'package:android_intent_plus/android_intent.dart';
-import 'package:android_intent_plus/flag.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workmanager/workmanager.dart';
 
-/// Temporary URL for launching google map
-const String kGoogleMapUrl =
-    "https://www.google.com/maps/dir/?api=1&origin=18.6370204,73.8244481&destination=26.7324,88.4176&dir_action=navigate&travelmode=driving";
-
 /// Main Function ()
-void main() async {
+Future<void> main() async {
   // Ensure Flutter bindings are initialized
   WidgetsFlutterBinding.ensureInitialized();
   await BackgroundService.initializeService();
@@ -34,40 +31,22 @@ void main() async {
   //     );
   //   }
   // });
+
+  // // Listen to the overlay stream only once
+  // FlutterOverlayWindow.overlayListener.listen((event) {
+  //   print("Current Event: $event");
+  // });
 }
 
-/// First Overlay (Appears at bottom)
+/// First Overlay entry point (Appears at bottom)
 @pragma("vm:entry-point")
-void overlayMain() {
+Future<void> overlayMain() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   runApp(
     MaterialApp(
       debugShowCheckedModeBanner: false,
-      // home: Column(
-      //   children: [
-      //     ChatHeadOverlay(),
-      //     OverlayWidgetBottom(
-      //       onCancelPressed: () async {
-      //         print('Driver cancelled the request');
-      //         await FlutterOverlayWindow.closeOverlay();
-      //       },
-      //       onAcceptPressed: () async {
-      //         print('Accept pressed, switching to second overlay');
-      //         await FlutterOverlayWindow.closeOverlay();
-      //         overlayMain2(); // Show second overlay
-      //         await FlutterOverlayWindow.showOverlay(
-      //           height: 1200,
-      //           enableDrag: false,
-      //           // alignment: OverlayAlignment.bottomRight,
-      //           alignment: OverlayAlignment.centerRight,
-      //           positionGravity: PositionGravity.auto,
-      //         );
-      //       },
-      //     ),
-      //   ],
-      // ),
-
-      ///
+      // home: OverlayApp(),
       home: OverlayWidgetBottom(
         onCancelPressed: () async {
           print('Driver cancelled the request');
@@ -75,16 +54,28 @@ void overlayMain() {
         },
         onAcceptPressed: () async {
           print('Accept pressed, switching to second overlay');
+          // CommonMethods.sendValueToOverlay("Hello Overlay World!");
+          // CommonMethods.sendValueToOverlay2(
+          //   pickupLocation: 'This is Pickup Location',
+          //   dropLocation: 'This is Drop Location',
+          // );
           await FlutterOverlayWindow.closeOverlay();
           overlayMain2(); // Show second overlay
           await FlutterOverlayWindow.showOverlay(
             height: 1000,
             enableDrag: false,
-            alignment: OverlayAlignment.centerLeft,
+            alignment: OverlayAlignment.topCenter,
+            startPosition: OverlayPosition(0, 0),
             positionGravity: PositionGravity.auto,
             visibility: NotificationVisibility.visibilityPublic,
             flag: OverlayFlag.defaultFlag,
           );
+
+          // Send data after starting the overlay
+          // sendMessageToOverlay();
+          // Future.delayed(Duration(seconds: 1), () {
+          //   sendMessageToOverlay();
+          // });
         },
       ),
     ),
@@ -97,10 +88,15 @@ void overlayMain() {
   });
 }
 
-/// Second Overlay (Appears at Top)
+/// Second Overlay entry point (Appears at Top)
 @pragma("vm:entry-point")
-void overlayMain2() {
+Future<void> overlayMain2() async {
   WidgetsFlutterBinding.ensureInitialized(); // Ensure Flutter bindings are initialized
+
+  // final prefs = await SharedPreferences.getInstance();
+  // final String message = prefs.getString('overlay_message') ?? "No data passed";
+  // print("Overlay Message ===> $message");
+
   runApp(
     MaterialApp(
       debugShowCheckedModeBanner: false,
@@ -111,8 +107,8 @@ void overlayMain2() {
         },
         onAcceptPressed: () async {
           await FlutterOverlayWindow.closeOverlay();
-          _launchGoogleMapAppView();
-          // launchGoogleMapsPiP();
+          CommonMethods.launchGoogleMapAppView();
+          // CommonMethods.launchGoogleMapsPiP();
         },
         // onAcceptPressed: () async {
         //   print('Sending request to launch Google Maps');
@@ -136,99 +132,55 @@ void overlayMain2() {
   });
 }
 
-/// --- Launch Google Map Started --- ///
-
-/// 1. Launch Google Map and start navigation in its full app view.
-// // Using url_launcher
-// Future<void> _launchGoogleMap({required String origin, required String destination}) async {
-//   final Uri googleMapUrl = Uri.parse("https://www.google.com/maps/dir/?api=1&origin=$origin&destination=$destination&dir_action=navigate&travelmode=driving");
-//
-//   if (await canLaunchUrl(googleMapUrl)) {
-//     await launchUrl(googleMapUrl, mode: LaunchMode.platformDefault);
-//   } else {
-//     debugPrint("Could not launch Google Maps");
-//   }
-// }
-
-/// 2. Launch Google Map and start navigation in its full app view.
-// // Using android_intent_plus
-void _launchGoogleMapAppView() {
-  final intent = AndroidIntent(
-    action: 'action_view',
-    data: "google.navigation:q=26.7324,88.4176&mode=d",
-    package: 'com.google.android.apps.maps',
-    flags: [Flag.FLAG_ACTIVITY_NEW_TASK],
-  );
-
-  intent.launch();
-}
-
-/// 3. Launching Google Map and start navigation in Mini Window Mode/Picture-in-Picture (PiP) Mode
-// // Using android_intent_plus
-// Future<void> launchGoogleMapsPiP() async {
-//   try {
-//     final intent = AndroidIntent(
-//       action: 'action_view',
-//       data: 'google.navigation:q=26.7324,88.4176&mode=d',
-//       package: 'com.google.android.apps.maps',
-//     );
-//
-//     await intent.launch();
-//
-//     // Simulate pressing the Home button after a delay to trigger PiP mode
-//     await Future.delayed(Duration(seconds: 2));
-//     await _triggerPiPMode();
-//   } on PlatformException catch (e) {
-//     print("Error launching Google Maps: $e");
-//   }
-// }
-//
-// Future<void> _triggerPiPMode() async {
-//   final intent = AndroidIntent(
-//     action: 'android.intent.action.MAIN',
-//     category: 'android.intent.category.HOME',
-//   );
-//
-//   await intent.launch();
-// }
-
-/// --- Launch Google Map Ended --- ///
-
 /// workmanager Method to show overlay from background state of app
 void callbackDispatcher() {
   Workmanager().executeTask((task, inputData) async {
     print("Background Task Triggered: $task");
-    showFirstOverlay();
+    CommonMethods.showFirstOverlay();
+
+    // showFirstOverlay();
 
     return Future.value(true);
   });
 }
 
-/// First Overlay (Appears at bottom after 10 seconds when app goes to background state)
-Future<void> showFirstOverlay() async {
-  await FlutterOverlayWindow.showOverlay(
-    height: 1400,
-    // enableDrag: true,
-    // alignment: OverlayAlignment.centerLeft,
-    enableDrag: false,
-    alignment: OverlayAlignment.bottomCenter,
-    positionGravity: PositionGravity.auto,
-    visibility: NotificationVisibility.visibilityPublic,
-    flag: OverlayFlag.defaultFlag,
-  );
+// void sendValueToOverlay(String valueToPass) async {
+//   final prefs = await SharedPreferences.getInstance();
+//   await prefs.setString('overlay_message', valueToPass);
+// }
 
-  // If user doesn't accept within 30 seconds, remove the overlay
-  Timer(Duration(seconds: 30), () async {
-    await FlutterOverlayWindow.closeOverlay();
-    print('showFirstOverlay removed, 30 seconds completed');
-  });
-}
+// Future<String> sendValueToOverlay(String value) async {
+//   await FlutterOverlayWindow.shareData(value); // This sends data
+//   return value;
+// }
 
-/// Remove Overlay
-Future<void> removeOverlay() async {
-  await FlutterOverlayWindow.closeOverlay();
-  print('Overlay closed');
-}
+// void sendMessageToOverlay() async {
+//   await FlutterOverlayWindow.shareData({"message": "Hello from main app"});
+//   // await FlutterOverlayWindow.sendData({"message": "Hello from main app"});
+// }
+
+// void listenToOverlayData() async {
+//   FlutterOverlayWindow.overlayListener.listen((event) {
+//     print("Received from main app: $event");
+//   });
+// }
+
+// Future<void> showFirstOverlay() async {
+//   await FlutterOverlayWindow.showOverlay(
+//     height: 1400,
+//     enableDrag: false,
+//     alignment: OverlayAlignment.bottomCenter,
+//     positionGravity: PositionGravity.auto,
+//     visibility: NotificationVisibility.visibilityPublic,
+//     flag: OverlayFlag.defaultFlag,
+//   );
+//
+// // If user doesn't accept within 30 seconds, remove the overlay
+//   Timer(Duration(seconds: 30), () async {
+//     await FlutterOverlayWindow.closeOverlay();
+//     print('showFirstOverlay removed, 30 seconds completed');
+//   });
+// }
 
 /// Main APP ()
 class MyApp extends StatelessWidget {
@@ -239,6 +191,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: FlutterOverlayScreen(),
+      // home: MainScreen(),
     );
   }
 }

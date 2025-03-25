@@ -1,20 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_overlay_window/flutter_overlay_window.dart';
+import 'package:overlay_window_rnd/components/common_methods.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-const kText18w400 = TextStyle(
-  fontSize: 18,
-  color: Colors.white,
-  fontWeight: FontWeight.w400,
-);
-const kText14w400 = TextStyle(
-  fontSize: 14,
-  color: Colors.white,
-  fontWeight: FontWeight.w400,
-);
-const kHeightGap10 = SizedBox(height: 10);
-const kHeightGap20 = SizedBox(height: 20);
-const kHeightGap30 = SizedBox(height: 30);
-
-class OverlayWidgetBottom extends StatelessWidget {
+class OverlayWidgetBottom extends StatefulWidget {
+// class OverlayWidgetBottom extends StatelessWidget {
   const OverlayWidgetBottom({
     super.key,
     required this.onCancelPressed,
@@ -23,6 +13,42 @@ class OverlayWidgetBottom extends StatelessWidget {
 
   final void Function() onCancelPressed;
   final void Function() onAcceptPressed;
+
+  @override
+  State<OverlayWidgetBottom> createState() => _OverlayWidgetBottomState();
+}
+
+class _OverlayWidgetBottomState extends State<OverlayWidgetBottom> {
+  // String receivedText = "Waiting for data...";
+  //
+  // Future<String> receiveOverlayData() async {
+  //   final prefs = await SharedPreferences.getInstance();
+  //   setState(() {
+  //     receivedText = prefs.getString('overlay_message') ?? "No data passed";
+  //   });
+  //   return receivedText;
+  // }
+  //
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   receiveOverlayData();
+  // }
+
+  String overlayValue = "Waiting for data...";
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Listen to shared data from main app
+    FlutterOverlayWindow.overlayListener.listen((data) {
+      print("Overlay received: $data");
+      setState(() {
+        overlayValue = data.toString();
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,6 +61,12 @@ class OverlayWidgetBottom extends StatelessWidget {
           // child: Column(
           //   crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Text(
+              // receivedText,
+              overlayValue,
+              style: const TextStyle(color: Colors.white, fontSize: 16),
+              textAlign: TextAlign.center,
+            ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -67,7 +99,7 @@ class OverlayWidgetBottom extends StatelessWidget {
                     // shape: BoxShape.circle,
                   ),
                   child: IconButton(
-                    onPressed: onCancelPressed,
+                    onPressed: widget.onCancelPressed,
                     icon: Icon(
                       Icons.cancel_outlined,
                       size: 30,
@@ -153,7 +185,7 @@ class OverlayWidgetBottom extends StatelessWidget {
               ],
             ),
             ElevatedButton(
-              onPressed: onAcceptPressed,
+              onPressed: widget.onAcceptPressed,
               style: ButtonStyle(
                 backgroundColor: WidgetStateProperty.all<Color>(Colors.blue),
                 minimumSize: WidgetStateProperty.all<Size>(

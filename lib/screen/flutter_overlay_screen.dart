@@ -1,7 +1,7 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_overlay_window/flutter_overlay_window.dart';
+import 'package:overlay_window_rnd/components/common_methods.dart';
 import 'package:workmanager/workmanager.dart';
 
 class FlutterOverlayScreen extends StatefulWidget {
@@ -13,6 +13,8 @@ class FlutterOverlayScreen extends StatefulWidget {
 
 class _FlutterOverlayScreenState extends State<FlutterOverlayScreen> with WidgetsBindingObserver {
   AppLifecycleState? _appState;
+  String receivedMessage = "No data received yet"; // To store the received value
+  final TextEditingController textController = TextEditingController();
 
   @override
   void initState() {
@@ -22,6 +24,14 @@ class _FlutterOverlayScreenState extends State<FlutterOverlayScreen> with Widget
     // Get the current lifecycle state
     _appState = WidgetsBinding.instance.lifecycleState;
     print('Initial app state: $_appState');
+
+    // /// 🔥 Listen to the data from main app
+    // FlutterOverlayWindow.overlayListener.listen((data) {
+    //   debugPrint("Overlay received data: $data");
+    //   setState(() {
+    //     receivedMessage = data ?? "No data received";
+    //   });
+    // });
   }
 
   @override
@@ -38,39 +48,6 @@ class _FlutterOverlayScreenState extends State<FlutterOverlayScreen> with Widget
     print('Updated app state: $_appState');
   }
 
-  Future<void> requestOverlayPermission() async {
-    bool? granted = await FlutterOverlayWindow.isPermissionGranted();
-    if (granted == false) {
-      await FlutterOverlayWindow.requestPermission();
-    }
-  }
-
-  /// First Overlay (Appears at bottom)
-  Future<void> showFirstOverlay() async {
-    await FlutterOverlayWindow.showOverlay(
-      height: 1400,
-      // enableDrag: true,
-      // alignment: OverlayAlignment.centerLeft,
-      enableDrag: false,
-      alignment: OverlayAlignment.bottomCenter,
-      positionGravity: PositionGravity.auto,
-      visibility: NotificationVisibility.visibilityPublic,
-      flag: OverlayFlag.defaultFlag,
-    );
-
-    // If user doesn't accept within 30 seconds, remove the overlay
-    // Timer(Duration(seconds: 30), () {
-    //   removeOverlay();
-    //   print('showFirstOverlay removed, 30 seconds completed');
-    // });
-  }
-
-  /// Remove Overlay
-  Future<void> removeOverlay() async {
-    await FlutterOverlayWindow.closeOverlay();
-    print('Overlay closed');
-  }
-
   /// Check app state and handle overlay accordingly
   void handleShowOverlay() async {
     print('Checking app state before overlay: $_appState');
@@ -85,10 +62,6 @@ class _FlutterOverlayScreenState extends State<FlutterOverlayScreen> with Widget
         "uniqueTaskId",
         "showOverlayTask",
         initialDelay: Duration(seconds: 10), // Wait 10 seconds
-        // inputData: {
-        //   "title": "Hello from WorkManager!",
-        //   "content": "This is a background notification.",
-        // },
       );
     } else {
       print("overlay is running");
@@ -103,11 +76,16 @@ class _FlutterOverlayScreenState extends State<FlutterOverlayScreen> with Widget
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            // Request
             ElevatedButton(
-              onPressed: requestOverlayPermission,
+              onPressed: () {
+                CommonMethods.requestOverlayPermission();
+              },
               child: const Text("Request Overlay Permission"),
             ),
             const SizedBox(height: 20),
+
+            // Show
             ElevatedButton(
               onPressed: () async {
                 bool? isGranted = await FlutterOverlayWindow.isPermissionGranted();
@@ -116,19 +94,55 @@ class _FlutterOverlayScreenState extends State<FlutterOverlayScreen> with Widget
                   await FlutterOverlayWindow.requestPermission();
                 } else {
                   print('showFirstOverlay pressed');
-                  // showFirstOverlay();
                   handleShowOverlay();
+                  // CommonMethods.startChatHead();
                   print('Current app state - ${_appState}');
                 }
               },
               child: const Text("Show Overlay"),
             ),
             const SizedBox(height: 20),
+
+            // Close
             ElevatedButton(
               onPressed: () async {
-                removeOverlay();
+                CommonMethods.closeOverlay();
+                // CommonMethods.stopChatHead();
               },
               child: const Text("Close Overlay"),
+            ),
+            const SizedBox(height: 20),
+
+            // Instant Overlay
+            ElevatedButton(
+              onPressed: () async {
+                // print(receivedMessage);
+                CommonMethods.showFirstOverlay();
+              },
+              child: const Text("Instant Overlay"),
+            ),
+            const SizedBox(height: 20),
+
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: TextField(
+                controller: textController,
+                decoration: InputDecoration(
+                  labelText: 'Enter value to send to overlay',
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // value print
+            ElevatedButton(
+              onPressed: () async {
+                // final value = 'This is testing Pickup & Drop Location';
+                final value = textController.text.toString();
+                CommonMethods.sendDataToOverlay(value);
+                print('Data send to overlay => ${value}');
+              },
+              child: const Text("Send Value to Overlay"),
             ),
             const SizedBox(height: 20),
           ],

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_overlay_window/flutter_overlay_window.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class OverlayWidgetTop extends StatelessWidget {
-  const OverlayWidgetTop({
+// class OverlayWidgetTop extends StatelessWidget {
+class OverlayWidgetTop extends StatefulWidget {
+  OverlayWidgetTop({
     super.key,
     required this.onCancelPressed,
     required this.onAcceptPressed,
@@ -9,6 +12,31 @@ class OverlayWidgetTop extends StatelessWidget {
 
   final void Function() onCancelPressed;
   final void Function() onAcceptPressed;
+
+  @override
+  State<OverlayWidgetTop> createState() => _OverlayWidgetTopState();
+}
+
+class _OverlayWidgetTopState extends State<OverlayWidgetTop> {
+  String receivedText = "Waiting for data...";
+  String pickupLocation = "Waiting for data...";
+  String dropLocation = "Waiting for data...";
+
+  Future<String> receiveOverlayData() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      receivedText = prefs.getString('overlay_message') ?? "No data passed";
+      pickupLocation = prefs.getString('pickup_location') ?? "No data passed";
+      dropLocation = prefs.getString('drop_location') ?? "No data passed";
+    });
+    return receivedText;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    receiveOverlayData();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,6 +77,7 @@ class OverlayWidgetTop extends StatelessWidget {
                 SizedBox(
                   width: 300,
                   child: Text(
+                    // pickupLocation,
                     'Hafeezpet-1609, Rd Number 15, Krishna Nagar Colony, Aditya Nagas Hafeerpet',
                     maxLines: 2,
                     style: TextStyle(fontSize: 14),
@@ -74,7 +103,8 @@ class OverlayWidgetTop extends StatelessWidget {
               margin: EdgeInsets.only(left: 20),
               width: 300,
               child: Text(
-                'Hafeezpet-1609, Rd Number 15, Krishna Nagar Colony, Aditya Nagas Hafeerpet',
+                // dropLocation,
+                'Hafeezpet-1609, Rd Number 16, Ganga Nagar Colony, Sharma Nagas Hafeezpet',
                 maxLines: 2,
                 style: TextStyle(fontSize: 14),
               ),
@@ -84,20 +114,20 @@ class OverlayWidgetTop extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 IconButton(
-                  onPressed: onCancelPressed,
+                  onPressed: widget.onCancelPressed,
                   icon: Icon(
                     Icons.cancel_outlined,
                     size: 50,
                   ),
                 ),
                 ElevatedButton(
-                  onPressed: onAcceptPressed,
+                  onPressed: widget.onAcceptPressed,
                   style: ButtonStyle(
                     backgroundColor: WidgetStateProperty.all<Color>(Colors.yellow),
                     foregroundColor: WidgetStateProperty.all<Color>(Colors.black),
                     minimumSize: WidgetStateProperty.all<Size>(
-                      Size(200, 50),
-                      // Size(MediaQuery.of(context).size.width - 100, 50),
+                      // Size(200, 50),
+                      Size(MediaQuery.of(context).size.width - 100, 50),
                     ), // Width and height
                     shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                       RoundedRectangleBorder(
@@ -111,6 +141,11 @@ class OverlayWidgetTop extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+            Text(
+              receivedText,
+              style: const TextStyle(color: Colors.white, fontSize: 16),
+              textAlign: TextAlign.center,
             ),
           ],
         ),
